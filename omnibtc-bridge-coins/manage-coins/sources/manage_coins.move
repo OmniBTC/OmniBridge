@@ -7,10 +7,12 @@ module owner::ManageCoins {
     use aptos_std::event::{emit_event, EventHandle};
     use aptos_std::account::new_event_handle;
     use aptos_std::type_info;
-    use aptos_std::iterable_table;
     use aptos_framework::coin::{
         Self, Coin, BurnCapability, FreezeCapability, MintCapability
     };
+
+    use owner::iterable_table;
+
 
     const MAX_MEMO_LENGTH: u64 = 255;
     const MAX_DEDUPLICATE_BUFFER: u64 = 10000;
@@ -359,3 +361,4 @@ module owner::ManageCoins {
         }
     }
 }
+

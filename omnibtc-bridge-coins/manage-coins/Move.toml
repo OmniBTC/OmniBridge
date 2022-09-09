@@ -4,8 +4,8 @@ version = "0.1.0"
 license = "Apache-2.0"
 
 [dependencies]
-#AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "2c1e2dd5be5c71dd8069c7a6382d9f911a1cd5d0" }
-#AptosStdlib = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-stdlib", rev = "2c1e2dd5be5c71dd8069c7a6382d9f911a1cd5d0" }
+#AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-framework/", rev = "16bec80146da2f3fd28b948cf25f807e09e92e23" }
+#AptosStdlib = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework/aptos-stdlib", rev = "16bec80146da2f3fd28b948cf25f807e09e92e23" }
 AptosFramework = { local = "../../../aptos-core/aptos-move/framework/aptos-framework" }
 AptosStdlib = { local = "../../../aptos-core/aptos-move/framework/aptos-stdlib" }
 
