@@ -13,9 +13,9 @@ module owner::ManageCoins {
 
     use owner::iterable_table;
 
-
     const MAX_MEMO_LENGTH: u64 = 255;
     const MAX_DEDUPLICATE_BUFFER: u64 = 10000;
+    const MIN_WITHDRAW_AMOUNT: u64 = 150000; // 0.0015 BTC
 
     const EMANAGECOIN_CAPABILITIES: u64 = 1;
     const EMANAGECOIN_INFO_ADDRESS_MISMATCH: u64 = 2;
@@ -26,6 +26,7 @@ module owner::ManageCoins {
     const EMANAGECOIN_ALREADY_REGISTERED: u64 = 7;
     const EMANAGECOIN_REQUIRE_ADMIN: u64 = 8;
     const EMANAGECOIN_REQUIRE_CONTROLLER: u64 = 9;
+    const EMANAGECOIN_INVALID_WITHDRAW: u64 = 10;
 
     /// Capabilities resource storing mint and burn capabilities.
     /// The resource is stored on the account that initialized coin `CoinType`.
@@ -58,6 +59,7 @@ module owner::ManageCoins {
     /// Meta data
     struct Info has key {
         is_paused: bool,
+        min_withdraw: u64,
         controller: address,
         admin: address,
         deposits: iterable_table::IterableTable<String, NullValue>,
@@ -90,6 +92,7 @@ module owner::ManageCoins {
             Info {
                 controller,
                 admin,
+                min_withdraw: MIN_WITHDRAW_AMOUNT,
                 is_paused: false,
                 deposits: iterable_table::new<String, NullValue>(),
                 deposit_events: new_event_handle<DepositEvent>(owner),
@@ -211,6 +214,10 @@ module owner::ManageCoins {
             string::length(&memo) <= MAX_MEMO_LENGTH,
             error::invalid_argument(EMANAGECOIN_MEMO_TOO_LONG)
         );
+        assert!(
+            amount >= min_withdraw(),
+            error::invalid_argument(EMANAGECOIN_INVALID_WITHDRAW)
+        );
 
         let has_withdrew = borrow_global_mut<HasWithdrew<CoinType>>(type_address<CoinType>());
         let coin = coin::withdraw<CoinType>(account, amount);
@@ -262,6 +269,21 @@ module owner::ManageCoins {
         borrow_global_mut<Info>(type_address<Info>()).is_paused = pause
     }
 
+    /// Set new min withdraw limit
+    /// Call by admin
+    public entry fun set_min_withdraw(
+        account: &signer,
+        min_withdraw: u64,
+    ) acquires Info {
+        let admin_addr = signer::address_of(account);
+        assert!(
+            admin() == admin_addr,
+            error::permission_denied(EMANAGECOIN_REQUIRE_ADMIN)
+        );
+
+        borrow_global_mut<Info>(type_address<Info>()).min_withdraw = min_withdraw
+    }
+
     fun is_paused(): bool acquires Info {
         borrow_global<Info>(type_address<Info>()).is_paused
     }
@@ -299,11 +321,18 @@ module owner::ManageCoins {
     }
 
     fun controller(): address acquires Info {
-        borrow_global_mut<Info>(type_address<Info>()).controller
+        let info = borrow_global<Info>(type_address<Info>());
+        info.controller
     }
 
     fun admin(): address acquires Info {
-        borrow_global_mut<Info>(type_address<Info>()).admin
+        let info = borrow_global<Info>(type_address<Info>());
+        info.admin
+    }
+
+    fun min_withdraw():u64 acquires Info {
+        let info = borrow_global<Info>(type_address<Info>());
+        info.min_withdraw
     }
 
     #[test_only]
