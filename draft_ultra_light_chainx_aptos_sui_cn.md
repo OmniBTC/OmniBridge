@@ -1,4 +1,4 @@
-# 基于超轻节点的ChainX-Aptos资产跨链桥设计
+# 基于超轻节点的ChainX-Aptos/Sui资产跨链桥设计
 
 # 一、引言:
 
