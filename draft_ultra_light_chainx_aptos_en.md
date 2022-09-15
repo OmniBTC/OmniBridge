@@ -1,4 +1,4 @@
-# ChainX-Aptos assets bridge based on ultra-light node
+# ChainX-Aptos/Sui assets bridge based on ultra-light node
 
 # 1. Introduction:
 
