@@ -1,5 +1,5 @@
 /// Copyright 2022 OmniBTC Authors. Licensed under Apache-2.0 License.
-module owner::manager {
+module owner::xbtc {
     use std::string::utf8;
     use aptos_framework::coin::{
         Self, BurnCapability, FreezeCapability, MintCapability
@@ -7,33 +7,42 @@ module owner::manager {
 
     friend owner::bridge;
 
+    /// XBTC define
+    ////////////////////////
+    struct XBTC {}
+    ////////////////////////
+
     /// Capabilities resource storing mint and burn capabilities.
     /// The resource is stored on the account that initialized coin `CoinType`.
-    struct Capabilities<phantom CoinType> has key {
-        burn_cap: BurnCapability<CoinType>,
-        freeze_cap: FreezeCapability<CoinType>,
-        mint_cap: MintCapability<CoinType>,
+    struct Capabilities has key {
+        burn_cap: BurnCapability<XBTC>,
+        freeze_cap: FreezeCapability<XBTC>,
+        mint_cap: MintCapability<XBTC>,
     }
 
-    /// Issue a coin
-    /// Call by admin of bridge
-    public(friend) fun issue<CoinType>(
+    /// A helper function
+    public fun has_capabilities(
+        account: address
+    ):bool {
+        exists<Capabilities>(account)
+    }
+
+    /// Issue XBTC
+    /// Call by bridge
+    public(friend) fun issue(
         account: &signer,
-        name: vector<u8>,
-        symbol: vector<u8>,
-        decimals: u8,
     ) {
-        let (burn_cap, freeze_cap, mint_cap) = coin::initialize<CoinType>(
+        let (burn_cap, freeze_cap, mint_cap) = coin::initialize<XBTC>(
             account,
-            utf8(name),
-            utf8(symbol),
-            decimals,
+            utf8(b"XBTC"),
+            utf8(b"XBTC"),
+            8,
             true, // always monitor supply
         );
 
         move_to(
             account,
-            Capabilities<CoinType>{
+            Capabilities {
                 burn_cap,
                 freeze_cap,
                 mint_cap,
@@ -41,41 +50,36 @@ module owner::manager {
         );
     }
 
-    public fun has_capabilities<CoinType>(
-        account: address
-    ):bool {
-        exists<Capabilities<CoinType>>(account)
-    }
-
-    /// Call by admin of bridge
-    public(friend) fun deposit<CoinType>(
+    /// Mint XBTC to receiver
+    /// Call by bridge
+    public(friend) fun deposit(
         admin: address,
         receiver: address,
         amount: u64,
     ) acquires Capabilities {
-        let capabilities = borrow_global<Capabilities<CoinType>>(admin);
+        let capabilities = borrow_global<Capabilities>(admin);
         let coins_minted = coin::mint(amount, &capabilities.mint_cap);
         coin::deposit(receiver, coins_minted);
     }
 
-    /// Register coin account
+    /// Register XBTC account
     /// The same as 0x1::manged_coin::register
     /// Call by user
-    public entry fun register<CoinType>(
+    public entry fun register(
         account: &signer
     ) {
-        coin::register<CoinType>(account);
+        coin::register<XBTC>(account);
     }
 
-    /// Transfer coin
+    /// Transfer XBTC
     /// The same as 0x1::coin::transfer
     /// Call by user
-    public entry fun transfer<CoinType>(
+    public entry fun transfer(
         sender: &signer,
         receiver: address,
         amount: u64,
     ){
-        coin::transfer<CoinType>(sender, receiver, amount)
+        coin::transfer<XBTC>(sender, receiver, amount)
     }
 }
 

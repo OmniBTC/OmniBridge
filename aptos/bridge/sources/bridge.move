@@ -6,10 +6,9 @@ module owner::bridge {
     use std::option;
     use aptos_std::event::{emit_event, EventHandle};
     use aptos_std::account::new_event_handle;
-    use aptos_std::type_info;
     use aptos_framework::coin;
     use owner::iterable_table;
-    use owner::manager;
+    use owner::xbtc::{Self, XBTC};
 
     const MAX_MEMO_LENGTH: u64 = 255;
     const MAX_DEDUPLICATE_BUFFER: u64 = 10000;
@@ -23,14 +22,7 @@ module owner::bridge {
     const EBRIDGE_INFO_ALREADY_PUBLISHED: u64 = 6;
     const EBRIDGE_HAS_PAUSED: u64 = 7;
     const EBRIDGE_HAS_DEPOSITED: u64 = 8;
-    const EBRIDGE_ALREADY_REGISTERED: u64 = 9;
-    const EBRIDGE_NOT_REGISTER: u64 = 10;
-    const EBRIDGE_INVALID_WITHDRAW: u64 = 11;
-
-    /// Colletct redeem requests
-    struct HasWithdrew<phantom CoinType> has key {
-        coin: coin::Coin<CoinType>
-    }
+    const EBRIDGE_INVALID_WITHDRAW: u64 = 9;
 
     /// Only use key for deduplicate
     struct NullValue has store, drop {}
@@ -55,14 +47,10 @@ module owner::bridge {
         min_withdraw: u64,
         controller: address,
         admin: address,
+        xbtc: coin::Coin<XBTC>,
         deposits: iterable_table::IterableTable<String, NullValue>,
         deposit_events: EventHandle<DepositEvent>,
         withdraw_events: EventHandle<WithdrawEvent>
-    }
-
-    /// A helper function that returns the address of Type.
-    fun type_address<Type>(): address {
-        type_info::account_address(&type_info::type_of<Type>())
     }
 
     /// Call by owner
@@ -87,6 +75,7 @@ module owner::bridge {
                 admin,
                 min_withdraw: MIN_WITHDRAW_AMOUNT,
                 has_paused: false,
+                xbtc: coin::zero<XBTC>(),
                 deposits: iterable_table::new<String, NullValue>(),
                 deposit_events: new_event_handle<DepositEvent>(owner),
                 withdraw_events: new_event_handle<WithdrawEvent>(owner)
@@ -94,56 +83,23 @@ module owner::bridge {
         );
     }
 
-    /// Issue a coin
-    /// Call by admin(owner of coin)
-    public entry fun issue<CoinType>(
-        account: &signer,
-        name: vector<u8>,
-        symbol: vector<u8>,
-        decimals: u8,
-    ) acquires Info {
-        assert!(
-            admin() == signer::address_of(account),
-            error::permission_denied(EBRIDGE_REQUIRE_ADMIN)
-        );
-
-        manager::issue<CoinType>(
-            account,
-            name,
-            symbol,
-            decimals
-        )
-    }
-
-    /// Allow user withdraw XBTC to redeem BTC
+    /// Issue XBTC
     /// Call by admin
-    public entry fun register_withdraw<CoinType>(
+    public entry fun issue(
         account: &signer,
     ) acquires Info {
         assert!(
             admin() == signer::address_of(account),
             error::permission_denied(EBRIDGE_REQUIRE_ADMIN)
         );
-        assert!(
-            admin() == type_address<CoinType>(),
-            error::invalid_argument(EBRIDGE_INFO_ADDRESS_MISMATCH),
-        );
-        assert!(
-            !exists<HasWithdrew<CoinType>>(admin()),
-            error::already_exists(EBRIDGE_ALREADY_REGISTERED),
-        );
 
-        let has_withdrew = HasWithdrew<CoinType> {
-            coin: coin::zero<CoinType>()
-        };
-
-        move_to(account, has_withdrew);
+        xbtc::issue(account)
     }
 
-    /// Deposit coin
+    /// Deposit XBTC
     /// Call by admin
     /// Note: memo used for deduplicate deposit
-    public entry fun deposit<CoinType>(
+    public entry fun deposit(
         account: &signer,
         receiver: address,
         amount: u64,
@@ -166,24 +122,24 @@ module owner::bridge {
             error::already_exists(EBRIDGE_HAS_DEPOSITED)
         );
         assert!(
-            manager::has_capabilities<CoinType>(admin()),
+            xbtc::has_capabilities(admin()),
             error::not_found(EBRIDGE_CAPABILITIES),
         );
 
-        manager::deposit<CoinType>(admin(), receiver, amount);
+        xbtc::deposit(admin(), receiver, amount);
 
         // deposit event
         append(receiver, amount, memo);
     }
 
-    /// Withdraw coin to redeem source blockchain asset
+    /// Withdraw XBTC to redeem BTC
     /// Call by user
     /// Note: memo used for receiver BTC address
-    public entry fun withdraw<CoinType>(
+    public entry fun withdraw(
         account: &signer,
         amount: u64,
         memo: String,
-    ) acquires HasWithdrew, Info {
+    ) acquires Info {
         assert!(
             !has_paused(),
             error::invalid_state(EBRIDGE_HAS_PAUSED)
@@ -196,17 +152,13 @@ module owner::bridge {
             amount >= min_withdraw(),
             error::invalid_argument(EBRIDGE_INVALID_WITHDRAW)
         );
-        assert!(
-            exists<HasWithdrew<CoinType>>(admin()),
-            error::not_found(EBRIDGE_NOT_REGISTER),
-        );
 
-        let has_withdrew = borrow_global_mut<HasWithdrew<CoinType>>(admin());
-        let coin = coin::withdraw<CoinType>(account, amount);
-        coin::merge(&mut has_withdrew.coin, coin);
+        let info = borrow_global_mut<Info>(@owner);
+
+        let coin = coin::withdraw<XBTC>(account, amount);
+        coin::merge(&mut info.xbtc, coin);
 
         // withdraw event
-        let info = borrow_global_mut<Info>(@owner);
         emit_event(
             &mut info.withdraw_events,
             WithdrawEvent {
