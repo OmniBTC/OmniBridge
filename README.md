@@ -4,7 +4,7 @@
 
 ## BTC-Move bridge:
 
-A bridge between Bitcoin and Move language public chains (like Aptos and Sui) based on ultra-light node. [Details](https://github.com/OmniBTC/OmniBridge/blob/main/BTC_bridge_solution.md)
+A bridge between Bitcoin and Move language public chains (like Aptos and Sui) based on ultra-light node. 
 
 reference project： ChainX and ICP
 their solution： BTC Light Node + Threshold Aggregate Signature + Smart Contract platform
@@ -20,3 +20,5 @@ We just need to replace Alice with a BTC aggregate signature account (co-hosted 
 ## EVM-Move bridge：
 
 A decentralized bridge between the POS version of the EVM chain (such as ethereum, BSC) and the Move language public chain(like Aptos and Sui).
+
+## [Details](https://github.com/OmniBTC/OmniBridge/blob/main/BTC_bridge_solution.md)
