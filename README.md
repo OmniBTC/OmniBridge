@@ -2,6 +2,6 @@
 
 The drafts of some bridges
 
-[ChainX-Aptos/Sui view](./draft_ultra_light_chainx_aptos/sui_en.md)
+[ChainX-Aptos/Sui view](./BTC_bridge_solution.md.md)
 
-[ChainX-Aptos/Sui chinese view](./draft_ultra_light_chainx_aptos/sui_cn.md)
+[ChainX-Aptos/Sui chinese view](./跨链技术方案.md)
