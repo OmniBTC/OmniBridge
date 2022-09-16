@@ -1,5 +1,5 @@
 [package]
-name = "manage-coins"
+name = "coins"
 version = "0.1.0"
 license = "Apache-2.0"
 
@@ -10,4 +10,5 @@ AptosFramework = { local = "../../../aptos-core/aptos-move/framework/aptos-frame
 AptosStdlib = { local = "../../../aptos-core/aptos-move/framework/aptos-stdlib" }
 
 [addresses]
-owner = "_"
+admin = "_"
+
