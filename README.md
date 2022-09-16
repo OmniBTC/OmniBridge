@@ -15,7 +15,7 @@ There is still a problem with this way of thinking. Our OmniBTC wants to combine
 OmniBTC solution:
 BTC Light Node + Threshold Aggregate Signature + BTC Lightning Network + MoveVM
 Lightning Network solves the mutual trust problem between Alice and Bob.
-We just need to replace Alice with a BTC aggregate signature account (co-hosted by a sufficiently decentralized POS node on Sui or a Dao administrator selected above).
+We just need to replace Alice with a BTC aggregate signature account (co-hosted by a sufficiently decentralized POS node on Aptos/Sui or a Dao administrator selected above).
 
 ## EVM-Move bridge：
 
