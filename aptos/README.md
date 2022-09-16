@@ -1,4 +1,4 @@
-## Omnibtc-bridge
+## aptos-bridge
 
 ## Roles and calls
 - `owner`:
