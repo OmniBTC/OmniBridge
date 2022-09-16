@@ -47,7 +47,7 @@ module owner::bridge {
         min_withdraw: u64,
         controller: address,
         admin: address,
-        xbtc: coin::Coin<XBTC>,
+        has_withdrew: coin::Coin<XBTC>,
         deposits: iterable_table::IterableTable<String, NullValue>,
         deposit_events: EventHandle<DepositEvent>,
         withdraw_events: EventHandle<WithdrawEvent>
@@ -75,7 +75,7 @@ module owner::bridge {
                 admin,
                 min_withdraw: MIN_WITHDRAW_AMOUNT,
                 has_paused: false,
-                xbtc: coin::zero<XBTC>(),
+                has_withdrew: coin::zero<XBTC>(),
                 deposits: iterable_table::new<String, NullValue>(),
                 deposit_events: new_event_handle<DepositEvent>(owner),
                 withdraw_events: new_event_handle<WithdrawEvent>(owner)
@@ -156,7 +156,7 @@ module owner::bridge {
         let info = borrow_global_mut<Info>(@owner);
 
         let coin = coin::withdraw<XBTC>(account, amount);
-        coin::merge(&mut info.xbtc, coin);
+        coin::merge(&mut info.has_withdrew, coin);
 
         // withdraw event
         emit_event(
@@ -243,6 +243,10 @@ module owner::bridge {
 
     public fun min_withdraw():u64 acquires Info {
         borrow_global<Info>(@owner).min_withdraw
+    }
+
+    public fun has_withdrew():u64 acquires Info {
+        coin::value(&borrow_global<Info>(@owner).has_withdrew)
     }
 
     #[test_only]
