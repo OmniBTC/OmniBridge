@@ -253,16 +253,18 @@ module owner::bridge {
     fun bytes_to_hex_string(bytes: &vector<u8>): String {
         use std::vector;
 
-        let hex_symbols: vector<u8> = b"0123456789abcdef";
-
         let length = vector::length(bytes);
+        let hex_symbols: vector<u8> = b"0123456789abcdef";
         let buffer = b"0x";
 
         let i: u64 = 0;
         while (i < length) {
-            let byte = *vector::borrow(bytes, i);
-            vector::push_back(&mut buffer, *vector::borrow(&mut hex_symbols, (byte >> 4 & 0xf as u64)));
-            vector::push_back(&mut buffer, *vector::borrow(&mut hex_symbols, (byte & 0xf as u64)));
+            // little endian
+            let byte = *vector::borrow(bytes, length - i - 1);
+
+            vector::push_back(&mut buffer, *vector::borrow(&hex_symbols, (byte >> 4 & 0xf as u64)));
+            vector::push_back(&mut buffer, *vector::borrow(&hex_symbols, (byte & 0xf as u64)));
+
             i = i + 1;
         };
         string::utf8(buffer)
