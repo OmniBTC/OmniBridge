@@ -1,5 +1,5 @@
 /// Copyright 2022 OmniBTC Authors. Licensed under Apache-2.0 License.
-// Copy from https://github.com/aptos-labs/aptos-core/blob/main/aptos-move/move-examples/data_structures/sources/iterable_table.move
+/// Copy from https://github.com/aptos-labs/aptos-core/blob/main/aptos-move/move-examples/data_structures/sources/iterable_table.move
 module owner::iterable_table {
     use std::option::{Self, Option};
     use aptos_std::table_with_length::{Self, TableWithLength};

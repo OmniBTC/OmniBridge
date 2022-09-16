@@ -7,7 +7,7 @@ module owner::bridge {
     use aptos_std::event::{emit_event, EventHandle};
     use aptos_std::account::new_event_handle;
     use aptos_std::type_info;
-    use aptos_framework::coin::{Self, Coin};
+    use aptos_framework::coin;
     use owner::iterable_table;
     use owner::manager;
 
@@ -15,21 +15,21 @@ module owner::bridge {
     const MAX_DEDUPLICATE_BUFFER: u64 = 10000;
     const MIN_WITHDRAW_AMOUNT: u64 = 150000; // 0.0015 BTC
 
-    const EMANAGER_CAPABILITIES: u64 = 1;
-    const EMANAGER_REQUIRE_ADMIN: u64 = 2;
-    const EMANAGER_REQUIRE_CONTROLLER: u64 = 3;
-    const EMANAGER_INFO_ADDRESS_MISMATCH: u64 = 4;
-    const EMANAGER_MEMO_TOO_LONG: u64 = 5;
-    const EMANAGER_INFO_ALREADY_PUBLISHED: u64 = 6;
-    const EMANAGER_HAS_PAUSED: u64 = 7;
-    const EMANAGER_HAS_DEPOSITED: u64 = 8;
-    const EMANAGER_ALREADY_REGISTERED: u64 = 9;
-    const EMANAGER_NOT_REGISTER: u64 = 10;
-    const EMANAGER_INVALID_WITHDRAW: u64 = 11;
+    const EBRIDGE_CAPABILITIES: u64 = 1;
+    const EBRIDGE_REQUIRE_ADMIN: u64 = 2;
+    const EBRIDGE_REQUIRE_CONTROLLER: u64 = 3;
+    const EBRIDGE_INFO_ADDRESS_MISMATCH: u64 = 4;
+    const EBRIDGE_MEMO_TOO_LONG: u64 = 5;
+    const EBRIDGE_INFO_ALREADY_PUBLISHED: u64 = 6;
+    const EBRIDGE_HAS_PAUSED: u64 = 7;
+    const EBRIDGE_HAS_DEPOSITED: u64 = 8;
+    const EBRIDGE_ALREADY_REGISTERED: u64 = 9;
+    const EBRIDGE_NOT_REGISTER: u64 = 10;
+    const EBRIDGE_INVALID_WITHDRAW: u64 = 11;
 
     /// Colletct redeem requests
     struct HasWithdrew<phantom CoinType> has key {
-        coin: Coin<CoinType>
+        coin: coin::Coin<CoinType>
     }
 
     /// Only use key for deduplicate
@@ -73,11 +73,11 @@ module owner::bridge {
     ) {
         assert!(
             @owner == signer::address_of(owner) ,
-            error::invalid_argument(EMANAGER_INFO_ADDRESS_MISMATCH),
+            error::invalid_argument(EBRIDGE_INFO_ADDRESS_MISMATCH),
         );
         assert!(
             !exists<Info>(signer::address_of(owner)),
-            error::already_exists(EMANAGER_INFO_ALREADY_PUBLISHED),
+            error::already_exists(EBRIDGE_INFO_ALREADY_PUBLISHED),
         );
 
         move_to(
@@ -104,7 +104,7 @@ module owner::bridge {
     ) acquires Info {
         assert!(
             admin() == signer::address_of(account),
-            error::permission_denied(EMANAGER_REQUIRE_ADMIN)
+            error::permission_denied(EBRIDGE_REQUIRE_ADMIN)
         );
 
         manager::issue<CoinType>(
@@ -115,22 +115,22 @@ module owner::bridge {
         )
     }
 
-    // Allow user withdraw XBTC to redeem BTC
-    // Call by admin
+    /// Allow user withdraw XBTC to redeem BTC
+    /// Call by admin
     public entry fun register_withdraw<CoinType>(
         account: &signer,
     ) acquires Info {
         assert!(
             admin() == signer::address_of(account),
-            error::permission_denied(EMANAGER_REQUIRE_ADMIN)
+            error::permission_denied(EBRIDGE_REQUIRE_ADMIN)
         );
         assert!(
             admin() == type_address<CoinType>(),
-            error::invalid_argument(EMANAGER_INFO_ADDRESS_MISMATCH),
+            error::invalid_argument(EBRIDGE_INFO_ADDRESS_MISMATCH),
         );
         assert!(
             !exists<HasWithdrew<CoinType>>(admin()),
-            error::already_exists(EMANAGER_ALREADY_REGISTERED),
+            error::already_exists(EBRIDGE_ALREADY_REGISTERED),
         );
 
         let has_withdrew = HasWithdrew<CoinType> {
@@ -151,21 +151,23 @@ module owner::bridge {
     ) acquires Info {
         assert!(
             !has_paused(),
-            error::invalid_state(EMANAGER_HAS_PAUSED)
+            error::invalid_state(EBRIDGE_HAS_PAUSED)
         );
-
         assert!(
             admin() == signer::address_of(account),
-            error::permission_denied(EMANAGER_REQUIRE_ADMIN)
+            error::permission_denied(EBRIDGE_REQUIRE_ADMIN)
         );
-
         assert!(
             string::length(&memo) <= MAX_MEMO_LENGTH,
-            error::invalid_argument(EMANAGER_MEMO_TOO_LONG)
+            error::invalid_argument(EBRIDGE_MEMO_TOO_LONG)
         );
         assert!(
             !has_deposited(memo),
-            error::already_exists(EMANAGER_HAS_DEPOSITED)
+            error::already_exists(EBRIDGE_HAS_DEPOSITED)
+        );
+        assert!(
+            manager::has_capabilities<CoinType>(admin()),
+            error::not_found(EBRIDGE_CAPABILITIES),
         );
 
         manager::deposit<CoinType>(admin(), receiver, amount);
@@ -184,19 +186,19 @@ module owner::bridge {
     ) acquires HasWithdrew, Info {
         assert!(
             !has_paused(),
-            error::invalid_state(EMANAGER_HAS_PAUSED)
+            error::invalid_state(EBRIDGE_HAS_PAUSED)
         );
         assert!(
             string::length(&memo) <= MAX_MEMO_LENGTH,
-            error::invalid_argument(EMANAGER_MEMO_TOO_LONG)
+            error::invalid_argument(EBRIDGE_MEMO_TOO_LONG)
         );
         assert!(
             amount >= min_withdraw(),
-            error::invalid_argument(EMANAGER_INVALID_WITHDRAW)
+            error::invalid_argument(EBRIDGE_INVALID_WITHDRAW)
         );
         assert!(
             exists<HasWithdrew<CoinType>>(admin()),
-            error::not_found(EMANAGER_NOT_REGISTER),
+            error::not_found(EBRIDGE_NOT_REGISTER),
         );
 
         let has_withdrew = borrow_global_mut<HasWithdrew<CoinType>>(admin());
@@ -223,7 +225,7 @@ module owner::bridge {
     ) acquires Info {
         assert!(
             controller() == signer::address_of(account),
-            error::permission_denied(EMANAGER_REQUIRE_CONTROLLER)
+            error::permission_denied(EBRIDGE_REQUIRE_CONTROLLER)
         );
 
         borrow_global_mut<Info>(@owner).has_paused = pause
@@ -237,7 +239,7 @@ module owner::bridge {
     ) acquires Info {
         assert!(
             admin() == signer::address_of(account),
-            error::permission_denied(EMANAGER_REQUIRE_ADMIN)
+            error::permission_denied(EBRIDGE_REQUIRE_ADMIN)
         );
 
         borrow_global_mut<Info>(@owner).min_withdraw = min_withdraw

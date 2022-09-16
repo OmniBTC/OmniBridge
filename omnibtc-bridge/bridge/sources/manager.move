@@ -1,14 +1,11 @@
 /// Copyright 2022 OmniBTC Authors. Licensed under Apache-2.0 License.
 module owner::manager {
     use std::string::utf8;
-    use std::error;
     use aptos_framework::coin::{
         Self, BurnCapability, FreezeCapability, MintCapability
     };
 
     friend owner::bridge;
-
-    const EMANAGER_CAPABILITIES: u64 = 1;
 
     /// Capabilities resource storing mint and burn capabilities.
     /// The resource is stored on the account that initialized coin `CoinType`.
@@ -44,17 +41,18 @@ module owner::manager {
         );
     }
 
+    public fun has_capabilities<CoinType>(
+        account: address
+    ):bool {
+        exists<Capabilities<CoinType>>(account)
+    }
+
     /// Call by admin of bridge
     public(friend) fun deposit<CoinType>(
         admin: address,
         receiver: address,
         amount: u64,
     ) acquires Capabilities {
-        assert!(
-            exists<Capabilities<CoinType>>(admin),
-            error::not_found(EMANAGER_CAPABILITIES),
-        );
-
         let capabilities = borrow_global<Capabilities<CoinType>>(admin);
         let coins_minted = coin::mint(amount, &capabilities.mint_cap);
         coin::deposit(receiver, coins_minted);
