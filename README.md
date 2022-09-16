@@ -5,6 +5,7 @@
 ## BTC-Move bridge:
 
 A bridge between Bitcoin and Move language public chains (like Aptos and Sui) based on ultra-light node. [Details](https://github.com/OmniBTC/OmniBridge/blob/main/BTC_bridge_solution.md)
+
 reference project： ChainX and ICP
 their solution： BTC Light Node + Threshold Aggregate Signature + Smart Contract platform
 For the BTC aggregate address to host BTC, only the addresses and accounts hosting BTC are decentralized enough to make BTC look as decentralized as POS. For example: Bind the aggregated custody account to the node account on the chain one by one, which is as decentralized as the POS chain.
