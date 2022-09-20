@@ -1,0 +1,12 @@
+[package]
+name = "bridge-sui"
+version = "0.1.0"
+license = "Apache-2.0"
+
+
+[dependencies]
+# Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework", rev = "df05544fb0cbd6d6db016e71e5facb5e7cc27988" }
+Sui = { local = "../../../sui/crates/sui-framework" }
+
+[addresses]
+owner = "0x0"
