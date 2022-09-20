@@ -1,6 +1,11 @@
-## aptos-bridge
+## bridge-aptos
 
-## Roles and calls
+## supported dependencies
+- aptos-cli: `Aptos CLI Release v0.3.3`
+- AptosFramework: `main @ 16bec80146da2f3fd28b948cf25f807e09e92e23`
+- AptosStdlib: `main @ 16bec80146da2f3fd28b948cf25f807e09e92e23`
+
+## roles and calls
 - `owner`:
   - **publish** module: `xbtc.move`, `bridge.move`, `iterable_table.move`
   - **call** function: `bridge::initialize`
@@ -12,7 +17,7 @@
   - **call** function: `bridge::set_pause`
 
 - `user`: 
-  - **call** function: `xbtc::{register, transfer}`, `bridge::withdraw`
+  - **call** function: `bridge::withdraw`, `xbtc::{register, transfer}`
 
 ## test cmds
 ```bash
