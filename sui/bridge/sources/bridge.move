@@ -1,5 +1,6 @@
 /// Copyright 2022 OmniBTC Authors. Licensed under Apache-2.0 License.
 module owner::bridge {
+    use std::option::{Self, Option};
     use std::string::{Self, String};
     use std::vector;
 
@@ -9,7 +10,6 @@ module owner::bridge {
     use sui::object::{Self, UID, ID};
     use sui::event::emit;
     use sui::transfer;
-    use sui::types;
 
     use owner::vec_queue::{Self, VecQueue};
     use owner::xbtc::{Self, XBTC};
@@ -18,17 +18,15 @@ module owner::bridge {
     const MAX_DEDUPLICATE_BUFFER: u64 = 10000;
     const MIN_WITHDRAW_AMOUNT: u64 = 150000; // 0.0015 BTC
 
-    const EBRIDGE_ALREADY_INITIALIZED: u64 = 1;
+    const EBRIDGE_HAS_INITIALIZED: u64 = 1;
     const EBRIDGE_MISMATCH_XBTC_BRIDGE: u64 = 2;
-    const EBRIDGE_REQUIRE_AMDIN: u64 = 3;
-    const EBRIDGE_REQUIRE_CONTROLLER: u64 = 4;
-    const EBRIDGE_HAS_PAUSED: u64 = 5;
-    const EBRIDGE_MEMO_TOO_LONG: u64 = 6;
-    const EBRIDGE_HAS_DEPOSITED: u64 = 7;
-    const EBRIDGE_INVALID_WITHDRAW: u64 = 8;
-
-    /// Make sure initialize once
-    struct BRIDGE_OTW has drop {}
+    const EBRIDGE_REQUIRE_OWNER: u64 = 3;
+    const EBRIDGE_REQUIRE_AMDIN: u64 = 4;
+    const EBRIDGE_REQUIRE_CONTROLLER: u64 = 5;
+    const EBRIDGE_HAS_PAUSED: u64 = 6;
+    const EBRIDGE_MEMO_TOO_LONG: u64 = 7;
+    const EBRIDGE_HAS_DEPOSITED: u64 = 8;
+    const EBRIDGE_INVALID_WITHDRAW: u64 = 9;
 
     /// For deposit
     struct DepositEvent has copy, drop {
@@ -44,51 +42,73 @@ module owner::bridge {
         memo: String
     }
 
-    /// Bridge Info
+    /// Bridge info
     struct Info has key {
         id: UID,
         has_paused: bool,
+        has_initialized: bool,
         min_withdraw: u64,
+        creator: address,
         controller: address,
         admin: address,
-        xbtc_cap: ID,
+        xbtc_cap: Option<ID>,
         has_withdrew: Balance<XBTC>,
         deposits: VecQueue<String>,
     }
 
+    fun init(
+        ctx: &mut TxContext
+    ) {
+        let info = Info {
+            id: object::new(ctx),
+            has_paused: false,
+            has_initialized: false,
+            min_withdraw: MIN_WITHDRAW_AMOUNT,
+            creator: tx_context::sender(ctx),
+            controller: tx_context::sender(ctx),
+            admin: tx_context::sender(ctx),
+            xbtc_cap: option::none<ID>(),
+            has_withdrew: balance::zero<XBTC>(),
+            deposits: vec_queue::empty<String>(MAX_DEDUPLICATE_BUFFER)
+        };
+
+        transfer::share_object(info);
+    }
+
     /// Call by owner
     public entry fun initialize(
+        info: &mut Info,
         xbtc_cap: TreasuryCap<XBTC>,
         controller: address,
         admin: address,
         ctx: &mut TxContext
     ) {
+        // make sure call by only owner
         assert!(
-            types::is_one_time_witness(&BRIDGE_OTW{}),
-            EBRIDGE_ALREADY_INITIALIZED
+            info.creator == tx_context::sender(ctx),
+            EBRIDGE_REQUIRE_OWNER
         );
 
-        let info = Info {
-            id: object::new(ctx),
-            has_paused: false,
-            min_withdraw: MIN_WITHDRAW_AMOUNT,
-            controller,
-            admin,
-            xbtc_cap: object::id(&xbtc_cap),
-            has_withdrew: balance::zero<XBTC>(),
-            deposits: vec_queue::empty<String>(MAX_DEDUPLICATE_BUFFER)
-        };
+        // make sure initialize once
+        assert!(
+            !info.has_initialized,
+            EBRIDGE_HAS_INITIALIZED
+        );
+        info.has_initialized = true;
+
+        info.controller = controller;
+        info.admin = admin;
+        option::fill(&mut info.xbtc_cap, object::id(&xbtc_cap));
 
         transfer::transfer(xbtc_cap, admin);
-        transfer::share_object(info);
     }
 
     /// Deposit XBTC
     /// Call by admin
     /// Note: memo used for deduplicate deposit
     public entry fun deposit(
-        xbtc_cap: &mut TreasuryCap<XBTC>,
         info: &mut Info,
+        xbtc_cap: &mut TreasuryCap<XBTC>,
         receiver: address,
         amount: u64,
         memo: vector<u8>,
@@ -99,7 +119,7 @@ module owner::bridge {
             EBRIDGE_HAS_PAUSED
         );
         assert!(
-            info.xbtc_cap == object::id(xbtc_cap),
+            *option::borrow(&info.xbtc_cap) == object::id(xbtc_cap),
             EBRIDGE_MISMATCH_XBTC_BRIDGE
         );
         assert!(

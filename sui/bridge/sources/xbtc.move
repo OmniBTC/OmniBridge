@@ -58,6 +58,7 @@ module owner::xbtc {
     /// Join XBTC in `coins` with `self`
     /// The same as coin::join_vec
     /// Call by user
+    /// TODO: https://github.com/MystenLabs/sui/pull/4627
     public entry fun join_vec(
         self: &mut Coin<XBTC>,
         coins: vector<Coin<XBTC>>
@@ -71,6 +72,16 @@ module owner::xbtc {
         };
         // safe because we've drained the vector
         vector::destroy_empty(coins)
+    }
+
+    /// Consume XBTC and add its value to `self`.
+    /// The same as coin::join
+    /// Call by user
+    public entry fun join(
+        self: &mut Coin<XBTC>,
+        coin: Coin<XBTC>
+    ) {
+        coin::join(self, coin)
     }
 
     /// Send XBTC to receiver
