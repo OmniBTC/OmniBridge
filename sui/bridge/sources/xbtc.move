@@ -4,7 +4,7 @@ module owner::xbtc {
     use std::vector;
 
     use sui::coin::{Self, Coin, TreasuryCap};
-    use sui::tx_context::TxContext;
+    use sui::tx_context::{Self, TxContext};
     use sui::object::{Self, UID};
     use sui::transfer;
 
@@ -32,7 +32,7 @@ module owner::xbtc {
     ) {
         let treasury_cap = coin::create_currency<XBTC>(xbtc, ctx);
 
-        transfer::transfer(treasury_cap, @owner);
+        transfer::transfer(treasury_cap, tx_context::sender(ctx));
         transfer::freeze_object(
             XBTCInfo {
                 id: object::new(ctx),
