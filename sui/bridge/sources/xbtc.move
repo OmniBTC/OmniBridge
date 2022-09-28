@@ -58,7 +58,6 @@ module owner::xbtc {
     /// Join XBTC in `coins` with `self`
     /// The same as coin::join_vec
     /// Call by user
-    /// TODO: https://github.com/MystenLabs/sui/pull/4627
     public entry fun join_vec(
         self: &mut Coin<XBTC>,
         coins: vector<Coin<XBTC>>
@@ -66,7 +65,7 @@ module owner::xbtc {
         let i = 0;
         let len = vector::length(&coins);
         while (i < len) {
-            let coin = vector::remove(&mut coins, i);
+            let coin = vector::remove(&mut coins, 0);
             coin::join(self, coin);
             i = i + 1
         };

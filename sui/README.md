@@ -1,8 +1,8 @@
 ## bridge-sui
 
 ## supported dependencies
-- sui-cli: `sui 0.9.0`
-- Sui: `devnet-0.9.0 @ df05544fb0cbd6d6db016e71e5facb5e7cc27988`
+- sui-cli: `main @ 23739f31a618d76cb592828d8e0ef2422c4d9535`
+- Sui: `main @ 23739f31a618d76cb592828d8e0ef2422c4d9535`
 
 ## roles and calls
 - `owner`:
@@ -53,7 +53,7 @@ sui client call --gas-budget 10000 \
     --function "deposit" \
     --args $bridge_info \
            $treasury_cap \
-           0xdea83a5c27ef936cd9efd3bc596696e1d101d647 \
+           "0xdea83a5c27ef936cd9efd3bc596696e1d101d647" \
            100000 \
            "test"
            
@@ -73,7 +73,7 @@ sui client call --gas-budget 10000 \
     --module "bridge" \
     --function "withdraw" \
     --args $bridge_info \
-           0x75da7659b8036a5e0ae8d8c49fe6a497b7e2cd68 \
+           "0x75da7659b8036a5e0ae8d8c49fe6a497b7e2cd68" \
            1000 \
            "test"
 
@@ -92,9 +92,9 @@ sui client call --gas-budget 10000  \
     --package $package_id \
     --module "xbtc"  \
     --function "split_and_transfer" \
-    --args 0x75da7659b8036a5e0ae8d8c49fe6a497b7e2cd68 \
+    --args "0x75da7659b8036a5e0ae8d8c49fe6a497b7e2cd68" \
            100 \
-           0xdea83a5c27ef936cd9efd3bc596696e1d101d647
+           "0xdea83a5c27ef936cd9efd3bc596696e1d101d647"
 
 sui client objects
 
@@ -105,8 +105,22 @@ sui client call --gas-budget 10000  \
     --package $package_id \
     --module "xbtc"  \
     --function "join" \
-    --args 0x75da7659b8036a5e0ae8d8c49fe6a497b7e2cd68 \
-           0x21fc2493552578665ce3f9bc9a671936ae4e0d81
+    --args "0x75da7659b8036a5e0ae8d8c49fe6a497b7e2cd68" \
+           "0x21fc2493552578665ce3f9bc9a671936ae4e0d81"
+
+sui client objects
+
+
+# user xbtc::join_vec
+# cherry-pick coin<XBTC> 0x75da7659b8036a5e0ae8d8c49fe6a497b7e2cd68
+# cherry-pick coin<XBTC> 0x21fc2493552578665ce3f9bc9a671936ae4e0d81
+# cherry-pick coin<XBTC> 0x98de55653611898534793cd82893bb1dda513ac2
+sui client call --gas-budget 10000  \
+    --package $package_id \
+    --module "xbtc"  \
+    --function "join_vec" \
+    --args "0x75da7659b8036a5e0ae8d8c49fe6a497b7e2cd68" \
+           '["0x21fc2493552578665ce3f9bc9a671936ae4e0d81","0x98de55653611898534793cd82893bb1dda513ac2"]'
 
 sui client objects
 ```

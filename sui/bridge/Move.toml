@@ -5,7 +5,7 @@ license = "Apache-2.0"
 
 
 [dependencies]
-# Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework", rev = "df05544fb0cbd6d6db016e71e5facb5e7cc27988" }
+# Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework", rev = "23739f31a618d76cb592828d8e0ef2422c4d9535" }
 Sui = { local = "../../../sui/crates/sui-framework" }
 
 [addresses]
