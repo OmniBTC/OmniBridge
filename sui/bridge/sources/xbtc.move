@@ -65,7 +65,7 @@ module owner::xbtc {
         let i = 0;
         let len = vector::length(&coins);
         while (i < len) {
-            let coin = vector::remove(&mut coins, 0);
+            let coin = vector::pop_back(&mut coins);
             coin::join(self, coin);
             i = i + 1
         };
