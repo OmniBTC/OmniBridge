@@ -1,9 +1,9 @@
 ## bridge-aptos
 
 ## supported dependencies
-- aptos-cli: `Aptos CLI Release v0.3.3`
-- AptosFramework: `main @ 16bec80146da2f3fd28b948cf25f807e09e92e23`
-- AptosStdlib: `main @ 16bec80146da2f3fd28b948cf25f807e09e92e23`
+- aptos-cli: `Aptos CLI Release v1.0.0`
+- AptosFramework: `main @ 01108a2345b87d539d54a67b32db55193f9ace40`
+- AptosStdlib: `main @ 01108a2345b87d539d54a67b32db55193f9ace40`
 
 ## roles and calls
 - `owner`:
