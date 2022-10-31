@@ -1,12 +1,12 @@
 /// Copyright 2022 OmniBTC Authors. Licensed under Apache-2.0 License.
 module owner::xbtc {
     use std::string::{utf8, String};
-    use std::vector;
 
     use sui::coin::{Self, Coin, TreasuryCap};
     use sui::tx_context::{Self, TxContext};
     use sui::object::{Self, UID};
     use sui::transfer;
+    use sui::pay;
 
     friend owner::bridge;
 
@@ -25,12 +25,10 @@ module owner::xbtc {
 
     /// Register XBTC while publishing
     /// Call by bridge
-    /// TODO: refactor after merged this pr: https://github.com/MystenLabs/sui/pull/4558
     fun init(
-        xbtc: XBTC,
         ctx: &mut TxContext
     ) {
-        let treasury_cap = coin::create_currency<XBTC>(xbtc, ctx);
+        let treasury_cap = coin::create_currency<XBTC>(XBTC{}, 8, ctx);
 
         transfer::transfer(treasury_cap, tx_context::sender(ctx));
         transfer::freeze_object(
@@ -62,15 +60,7 @@ module owner::xbtc {
         self: &mut Coin<XBTC>,
         coins: vector<Coin<XBTC>>
     ) {
-        let i = 0;
-        let len = vector::length(&coins);
-        while (i < len) {
-            let coin = vector::pop_back(&mut coins);
-            coin::join(self, coin);
-            i = i + 1
-        };
-        // safe because we've drained the vector
-        vector::destroy_empty(coins)
+        pay::join_vec(self, coins)
     }
 
     /// Consume XBTC and add its value to `self`.
@@ -92,7 +82,7 @@ module owner::xbtc {
         receiver: address,
         ctx: &mut TxContext
     ) {
-        coin::split_and_transfer(
+        pay::split_and_transfer(
             xbtc,
             amount,
             receiver,
